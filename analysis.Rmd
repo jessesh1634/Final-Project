@@ -1,0 +1,105 @@
+---
+title: "STAT 184 Final Project" 
+subtitle: "Superhero Attributes"
+author: "Jessica Eshenbaugh"
+output: html_notebook
+---
+
+## Front Matter
+```{r}
+# clean up workspace environment
+rm(list = ls())
+
+## load required tables/packages
+library(mosaic)
+library(tidyverse)
+library(ggplot2)
+library(rvest)
+
+## load data set (DC)
+library(readr)
+DC <- read_csv("dc-wikia-data.csv")
+View(DC)
+## load data set (Marvel)
+library(readr)
+Marvel <- read_csv("marvel-wikia-data.csv")
+View(Marvel)
+```
+
+## Guiding Question
+The data I will be looking at is data on superheroes. One set is for Marvel, the other DC. It has various attributes of the character. 
+My question is: How does whether a superhero is a gender or sexual minority affect their attributes (ie number of appearances, year of appearance, etc) in these comic companies?
+
+## Become Acquainted With Data Sources:
+* I found this data on the website "Kaggle"
+* It was collected by a company called "FiveThirtyEight", and they scraped it from Marvel and DC Wikia 
+* The data was originally collected to look at the under-representation of women in comic books. It was collected in 2018, on about August 24. 
+* A case represents a superhero/villain from either Marvel or DC (depending on the data set you're looking at)
+* Some of the variables I plan on looking at are 'APPEARANCES', 'NAME', 'ALIGN', 'SEX', 'GSM', 'ALIVE', 'FIRST APPEARANCE', and 'YEAR'
+
+## Explore intuition related to the research question 
+```{r}
+## look at data sets
+str(Marvel)
+```
+```{r}
+str(DC)
+```
+```{r}
+## make the variable 'FIRST APPEARANCE' easier to work with 
+Marvel <-
+  Marvel %>%
+  mutate(first_app = "FIRST APPEARANCE")
+DC <-
+  DC %>%
+  mutate(first_app = "FIRST APPEARANCE")
+```
+
+```{r}
+## filter out variables that won't be used
+Marvel <-
+  Marvel %>%
+  select(name, ID, ALIGN, EYE, HAIR, SEX, GSM, ALIVE, APPEARANCES, first_app, Year)
+DC <-
+  DC %>%
+  select(name, ID, ALIGN, EYE, HAIR, SEX, GSM, ALIVE, APPEARANCES, first_app, YEAR)
+```
+In this case, the NA values in the GSM variable are for non-minority characters:
+```{r}
+## replace NA values in GSM with 'non-minority' (Marvel)
+Marvel <-
+  Marvel %>%
+  mutate(GSM = replace(GSM, is.na(GSM), "non-minority"))
+
+## replace NA values in GSM with 'non-minority' (DC)
+DC <-
+  DC %>%
+  mutate(GSM = replace(GSM, is.na(GSM), "non-minority"))
+
+## make the data set easier to work with 
+```  
+```{r}
+## find how many characters are of a minority (Marvel)
+Marvel %>%
+  group_by(GSM) %>%
+  summarise(total = n())
+## find how many characters are a minority (DC)
+DC %>%
+  group_by(GSM) %>%
+  summarise(total = n())
+```
+Based on these summary statistics, it appears that both Marvel and DC have more a large amount more non-minority characters than it does minority, and notably DC has not only less minority characters overall, but also less of a range of minority characters. This may be due to the fact when the data was collected a couple years ago, when gay rights were more of a debate than fact, and the lack of transgender or pansexual characters may have been due to the fact that there wasn't much of a conversation around these issues/minorities at that time.  
+```{r}
+## find how many appearances minority characters make (Marvel)
+Marvel %>%
+  group_by(GSM) %>%
+  na.omit() %>%
+  summarise(total_appearances = sum(APPEARANCES))
+## find how many appearances minority characters make (DC)
+DC %>%
+  group_by(GSM) %>%
+  na.omit() %>%
+  summarise(total_appearances = sum(APPEARANCES))
+```
+Out of all the minority characters, it appears that bisexual characters made the most appearances in Marvel, by over twice that of the second highest amount of appearances. In DC comics, it appears that 'homosexual' has the most appearances in comics. Overall, however, non-minority has by far the most appearances in comics. This is what I expected, it seems as though non-minority characters are far more popular in comic books. Perhaps bisexual/homosexual characters were included the most out of all the minority characters categories because, in the US, they are the majority of people out of these minority categories. 
+
