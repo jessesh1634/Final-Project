@@ -45,7 +45,7 @@ head(Marvel)
 str(DC)
 head(DC)
 ```
-## Explore intuition related to the research question 
+## Explore intuition related to the research question with pairs of variables
 ### Make the Data More User-Friendly
 ```{r}
 ## make the variable 'FIRST APPEARANCE' easier to work with 
@@ -67,7 +67,7 @@ DC <-
   select(name, ID, ALIGN, EYE, HAIR, SEX, GSM, ALIVE, APPEARANCES, first_app, YEAR)
 ```
 
-In this case, the NA values in the GSM variable are for non-minority characters, as it was explained that FiveThirtyEight specified any character/character type that was a minority, so I have to change the NA values within GSM to "non-minority"
+In this case, the NA values in the GSM variable are for non-minority characters, as it was explained that FiveThirtyEight specified any character/character type that was a minority, so I have to change the NA values within GSM to "non-minority". I will also change the Marvel dataset variable "Year" to "YEAR" so that the variable name matches the corresponding DC dataset variable. 
 ```{r}
 ## replace NA values in GSM with 'non-minority' (Marvel)
 Marvel <-
@@ -80,7 +80,27 @@ DC <-
   mutate(GSM = replace(GSM, is.na(GSM), "non-minority"))
 
 ## make the data set easier to work with 
+Marvel <-
+  Marvel %>%
+  rename(YEAR = Year)
 ```  
+While looking at Marvel and DC comic's data separately can be useful, it may also prove useful to look at the combined data, so I will make a combined dataset for further analysis of the trends. 
+```{r}
+# make a combined dataset for further analysis
+## make new variable that has the comic's name
+Marvel_combo <-
+  Marvel %>%
+  mutate(comic = "Marvel")
+DC_combo <-
+  DC %>%
+  mutate(comic = "DC")
+```
+```{r}
+## combine the two tables
+Hero <-
+  Marvel_combo %>%
+  bind_rows(DC_combo) 
+```
 ### Look at the number of characters in relation to GSM
 I suspect that a number of the variables within the data set (including ALGIN, APPEARANCES, FIRST APPEARANCE, YEAR, SEX, and ID) are affected by the variable GSM (whether the character is a sexual/gender minority or not). I will first begin by looking at the total number of minority characters within each comic book company. 
 ```{r}
@@ -111,22 +131,6 @@ DC %>%
 ```
 Out of all the minority characters, it appears that bisexual characters made the most appearances in Marvel, by over twice that of the second highest amount of appearances within minorities. In DC comics, it appears that 'homosexual' has the most appearances in comics. Overall, however, non-minority has by far the most appearances in comics. This is what I expected, it seems as though non-minority characters are far more popular in comic books. Perhaps bisexual/homosexual characters were included the most out of all the minority characters categories because, in the US, they are the majority of people out of these minority categories. 
 
-### Look at how GSM, Year, and Appearances interact
-Another thing that might be interesting is the year a minority character first appeared. Gay marriage wasn't legalized until 2015, so many comic books may not have had many minority characters up until that point. So, the minority characters, such as 'homosexual' may not appear until later years (2015-2018), which conversely may cause their number of appearances to be less than those of non-minority, some of whom have been around since the 1940's
-```{r}
-Marvel %>%
-  ggplot(aes(x = Year, y = APPEARANCES)) +
-  geom_point(aes(color = GSM, group = GSM, alpha = 0.15)) +
-  labs(x = "Year of First Appearance", y = "Number of Appearances", title = "Marvel-Number of Appearances Vs. Year of Appearance")
-```
-It does appear that (for Marvel) for the most part, the minority characters appeared later on in comic books, however, not as late as I had originally thought; it appears that there was a couple of minority characters in the late 1940's, and there was also some minority character added in in the 1960-70's. However, it does seem like the transgender and trensvestite minorities didn't first start appearing until the 1990's, however that is once again still earlier than my estimate. Away from some outliers, there doesn't appear to be that drastic of a difference between the number of appearances in minorities and that of non-minorities, in fact there is a bisexual character that looks to have first appeared around 1949 that has more appearances than most non-minorities that first appeared around that time. 
-```{r}
-DC %>%
-  ggplot(aes(x = YEAR, y = APPEARANCES)) +
-  geom_point(aes(color = GSM, group = GSM, alpha = 0.15)) +
-  labs(x = "Year of First Appearance", y = "Number of Appearances", title = "DC-Number of Appearances Vs. Year of Appearance")
-```
-It appears that DC comics more follows the trend I predicted of the minority characters showing up in later years, however once again they seem to have appeared earlier than my guess of 2015 and on, begginning to appear around what looks like early 1980's and on. It appears that there are a few characters for the minorities that appear more than other non-minority characters that were introduced in the same year, however for the most part they are around the same amount of appearances, possibly a little less, in comparison to the non-minority characters from that year. 
 
 ### Look at GSM in relation to Sex
 Another interesting thing to look at is how GSM and SEX may interact with one another. I suspect that within each minority, the male sex will be most common, simply because male characters are more common within comic books. 
@@ -142,5 +146,60 @@ DC %>%
 ```
 It appears that within minority characters for Marvel, male homosexual characters are more common, which confirms (at least for the 'homosexual' category) my theory that men would be more common. However, for the categories of bisexual, transgender, and pansexual, it appears that female characters are more common, disproving my theory that men would be predominant. 
 
+## Explore intuition related to the research question with 3+ variables
+Now that I have done some summary statistics and observations into how pairs of some of the variables interact, I will now go further in-depth by looking at how three or more variables interact. 
+
+### Look at how GSM, Year, and Appearances interact
+Another thing that might be interesting is the year a minority character first appeared. Gay marriage wasn't legalized until 2015, so many comic books may not have had many minority characters up until that point. So, the minority characters, such as 'homosexual' may not appear until later years (2015-2018), which conversely may cause their number of appearances to be less than those of non-minority, some of whom have been around since the 1940's
+```{r}
+Marvel %>%
+  ggplot(aes(x = YEAR, y = APPEARANCES)) +
+  geom_point(aes(color = GSM, group = GSM, alpha = 0.15)) +
+  labs(x = "Year of First Appearance", y = "Number of Appearances", title = "Marvel-Number of Appearances Vs. Year of Appearance")
+```
+It does appear that (for Marvel) for the most part, the minority characters appeared later on in comic books, however, not as late as I had originally thought; it appears that there was a couple of minority characters in the late 1940's, and there was also some minority character added in in the 1960-70's. However, it does seem like the transgender and trensvestite minorities didn't first start appearing until the 1990's, however that is once again still earlier than my estimate. Away from some outliers, there doesn't appear to be that drastic of a difference between the number of appearances in minorities and that of non-minorities, in fact there is a bisexual character that looks to have first appeared around 1949 that has more appearances than most non-minorities that first appeared around that time. 
+
+```{r}
+DC %>%
+  ggplot(aes(x = YEAR, y = APPEARANCES)) +
+  geom_point(aes(color = GSM, group = GSM, alpha = 0.15)) +
+  labs(x = "Year of First Appearance", y = "Number of Appearances", title = "DC-Number of Appearances Vs. Year of Appearance")
+```
+It appears that DC comics more follows the trend I predicted of the minority characters showing up in later years, however once again they seem to have appeared earlier than my guess of 2015 and on, begginning to appear around what looks like early 1980's and on. It appears that there are a few characters for the minorities that appear more than other non-minority characters that were introduced in the same year, however for the most part they are around the same amount of appearances, possibly a little less, in comparison to the non-minority characters from that year. 
+To help visualize the both datasets easier, I will graph each minority category by itself.
+```{r}
+Hero %>%
+  ggplot(aes(x = YEAR, y = APPEARANCES)) +
+  geom_point(aes(alpha = 0.15)) +
+  geom_smooth() +
+  facet_wrap(~ GSM, ncol = 2) +
+  labs(x = "Year of First Appearance", y = "Number of Appearances", title = "Number of Appearances Vs. Year of Appearance")
+```
+It seems that this reinforces the observations above; non-minorities did show up first and more frequently, however minority characters did appear earlier than I had originally thought, although this does better illustrate how little transgender, transvestite, pansexual, and genderfluid characters appear, as well as the fact that they did show up much later in relation to all of the other categories of characters. Bisexual and Homosexual characters (mainly Bisexual) seem to follow the theory that the characters that were introduced at later dates have less appearances, as well. 
+
+### Look at GSM, Appearances, and Sex
+Something else that may be important is whether or not one sex type is more often clasified as a minority than another, and whether different combinations of minorities and sex have less appearances than others. Since it appears that minorities and sexes outside of male and female appear to have less comic characters overall, perhaps they also have less appearances. Due to this possible pattern, a character that has a combination of a minority as well as less common sex may appear less because of the combination having less characters. Non-minority characters that have more traditional sexes (male and female) may also have more appearances than most. 
+
+```{r}
+Hero_totals <-
+  Hero %>%
+  na.omit() %>%
+  group_by(GSM, SEX) %>%
+  summarise(total = sum(APPEARANCES)) 
+```
+```{r}
+Hero_wide <-
+  Hero_totals %>%
+  spread(key = GSM, value = total)
+knitr::kable(Hero_wide)
+```
+Looking at this table, it does appear that in some cases the characters that are a minority and have a less common sex do have less appearances. Genderfluid characters (marked genderfluid for both GSM and sex) have the least number of appearances in the whole table with 33 appearances, and Bisexual, genderfluid characters also have one of the lower appearance numbers, with just 532 appearances. It is also shown that non-minorities with more traditional genders have the most appearances. It can also be noted that the only group of non-minority characters that has a less traditional sex (genderless) has a great drop-off in the number of appearances, with just 39 appearances. This could perhaps indicate that a less traditional sex does in fact negatively affect the total number of appearances. One other note is that it appears that characters that are minorities may not be paired with a less common sex as often as I originally thought, as Pansexual has apperances for only the female sex, and bisexual chracters have the most appearances within the female sex as well, indicating that a minority does not always indicate a less common sex as well. 
+
+```{r}
+Hero %>%
+  ggplot(aes(x = GSM, y = APPEARANCES)) +
+  geom_boxplot() +
+  labs(x = "Minority Type", y = "Number of Appearances", title = "Minorities in relation to sex and appearances")
+```
 
 
