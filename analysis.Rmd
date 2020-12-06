@@ -19,11 +19,9 @@ library(rvest)
 ## load data set (DC)
 library(readr)
 DC <- read_csv("dc-wikia-data.csv")
-View(DC)
 ## load data set (Marvel)
 library(readr)
 Marvel <- read_csv("marvel-wikia-data.csv")
-View(Marvel)
 ```
 
 ## Guiding Question
@@ -103,7 +101,19 @@ Hero <-
 ```
 
 ### Look at the number of characters in relation to GSM
-I suspect that a number of the variables within the data set (including ALGIN, APPEARANCES, FIRST APPEARANCE, YEAR, SEX, and ID) are affected by the variable GSM (whether the character is a sexual/gender minority or not). I will first begin by looking at the total number of minority characters within each comic book company. 
+I suspect that a number of the variables within the data set (including ALGIN, APPEARANCES, FIRST APPEARANCE, YEAR, SEX, and ID) are affected by the variable GSM (whether the character is a sexual/gender minority or not). I will first begin by looking at the bar graph of total number of minority characters within each comic book company. 
+```{r}
+Marvel %>%
+  ggplot(aes(x = GSM)) +
+  geom_bar() +
+  labs(x = "Minority Type", y = "Number of Characters", title = "Number of Characters per Minority Type")
+DC %>%
+    ggplot(aes(x = GSM)) +
+  geom_bar() +
+  labs(x = "Minority Type", y = "Number of Characters", title = "Number of Characters per Minority Type")
+```
+Based on these summary statistics, it appears that both Marvel and DC have more a large amount more non-minority characters than it does minority, and notably DC has not only less minority characters overall, but also less of a range of minority characters. This may be due to the fact when the data was collected a couple years ago, when gay rights were more of a debate than fact, and the lack of transgender or pansexual characters may have been due to the fact that there wasn't much of a conversation around these issues/minorities at that time.
+To confirm what was seen in the bar graph, I will look at the summary statistics of each comic. 
 ```{r}
 ## find how many characters are of a minority (Marvel)
 Marvel %>%
@@ -116,7 +126,7 @@ DC %>%
   summarise(total = n()) %>%
   arrange(desc(total))
 ```
-Based on these summary statistics, it appears that both Marvel and DC have more a large amount more non-minority characters than it does minority, and notably DC has not only less minority characters overall, but also less of a range of minority characters. This may be due to the fact when the data was collected a couple years ago, when gay rights were more of a debate than fact, and the lack of transgender or pansexual characters may have been due to the fact that there wasn't much of a conversation around these issues/minorities at that time.
+This confirms what the graph above has shown above; in Marvel, there is a lot more non-minority characters than there are others (15,656 characters to the next highest, which is 62). DC follows a similar trend, but it is somewhat less dramatic of a drop-off between non-minority and minority characters, when compared to that of Marvel. 
 
 ### Look at GSM and Appearances
 I theorize that GSM may also have an affect on the number of appearances. Based on the issue of uner-representation within minority groups such as these, I would assume that minority characters make less total appearances in comics than non-minority characters. 
@@ -125,37 +135,56 @@ I theorize that GSM may also have an affect on the number of appearances. Based 
 Marvel %>%
   group_by(GSM) %>%
   na.omit() %>%
-  summarise(total_appearances = sum(APPEARANCES))
+  summarise(total_appearances = sum(APPEARANCES)) %>%
+  arrange(desc(total_appearances))
 ## find how many appearances minority characters make (DC)
 DC %>%
   group_by(GSM) %>%
   na.omit() %>%
-  summarise(total_appearances = sum(APPEARANCES))
+  summarise(total_appearances = sum(APPEARANCES)) %>%
+  arrange(desc(total_appearances))
 ```
 Out of all the minority characters, it appears that bisexual characters made the most appearances in Marvel, by over twice that of the second highest amount of appearances within minorities. In DC comics, it appears that 'homosexual' has the most appearances in comics. Overall, however, non-minority has by far the most appearances in comics. This is what I expected, it seems as though non-minority characters are far more popular in comic books. Perhaps bisexual/homosexual characters were included the most out of all the minority characters categories because, in the US, they are the majority of people out of these minority categories. 
-
+To further look at this apparent trend of non-minorities having more appearances, I will find the total appearances of each minority group, then separate non-minority from the minorities, spread the data based on GSM, and find the difference of non-minority appearances and the sum of all the other minority appearances. 
 ```{r}
+## make data set that finds the total appearances for each minority type
 Hero_total <-
   Hero %>%
+  na.omit() %>%
   group_by(GSM) %>%
-  summarise(total = sum(APPEARANCES, na.rm = TRUE)) 
-```
-```{r}
-Hero_GSM <-
+  summarise(total = sum(APPEARANCES)) 
+## pick only the minority (all minority's end in 's')
+Hero_min <-
   Hero_total %>%
-  spread(key = GSM, value = total)
-knitr::kable(Hero_GSM)
+  filter(grepl("s$", GSM))
+## pick only non-minority
+Hero_non_min <-
+  Hero_total %>%
+  filter(grepl("y$", GSM))
 ```
 ```{r}
-diff <- function(a, b, c, d, e, f, g, h) {
-  x <- sum(a) - ( sum(b) + sum(c) + sum(d) + sum(e) + sum(f) + sum(g) + sum(h))
-  paste("The difference between Non-minority and minorities is", x)
+## spread data table based on minority
+Hero_spread_min <-
+  Hero_min %>%
+  spread(key = GSM, value = total)
+knitr::kable(Hero_spread_min)
+## spread data table based on non-minority
+Hero_spread_nm <-
+  Hero_non_min %>%
+  spread(key = GSM, value = total)
+knitr::kable(Hero_spread_nm)
+```
+
+```{r}
+app_diff <- function(x, y) {
+  z <- x - sum(y)
+  paste("The difference between non-minority and all minority appearances is", z)
 }
 ```
 ```{r}
-Hero_GSM %>%
-  diff("non-minority", "Bisexual Characters", "Genderfluid Characters", "Homosexual Characters", "Pansexual Characters", "Transgender Characters", "Transvestites")
+app_diff(Hero_spread_nm, Hero_spread_min)
 ```
+This helps to reinforce the relation that is shown above; even when you subtract all the appearances that the minority characters have as a whole, non-minority characters still have almost 30,000 appearances. Perhaps this is due to the fact that they may've appeared earlier than most minority characters, however, the gap is still very noticeable. 
 
 ### Look at GSM in relation to Sex
 Another interesting thing to look at is how GSM and SEX may interact with one another. I suspect that within each minority, the male sex will be most common, simply because male characters are more common within comic books. 
@@ -170,6 +199,15 @@ DC %>%
   arrange(desc(total))
 ```
 It appears that within minority characters for Marvel, male homosexual characters are more common, which confirms (at least for the 'homosexual' category) my theory that men would be more common. However, for the categories of bisexual, transgender, and pansexual, it appears that female characters are more common, disproving my theory that men would be predominant. 
+To look at this possible trend better overall, I will make a bar graph of sex and GSM, to see if the data sets as a whole follow this trend. 
+```{r}
+Hero %>%
+  ggplot(aes(x = SEX)) +
+  geom_bar(aes(fill = GSM), position = "dodge") +
+  theme(axis.text.x = element_text(face="plain", size=5, angle=90))
+  labs(x = "Sex", y = "Number of Characters", title = "Number of Characters in relation to sex and minority type") 
+```
+This helps to confirm what was seen above, with non-minority characters having the most characters overall, and that non-minority male characters are the most common characters out of all the non-minority sexes. 
 
 ## Explore intuition related to the research question with 3+ variables
 Now that I have done some summary statistics and observations into how pairs of some of the variables interact, I will now go further in-depth by looking at how three or more variables interact. 
@@ -206,6 +244,7 @@ It seems that this reinforces the observations above; non-minorities did show up
 Something else that may be important is whether or not one sex type is more often clasified as a minority than another, and whether different combinations of minorities and sex have less appearances than others. Since it appears that minorities and sexes outside of male and female appear to have less comic characters overall, perhaps they also have less appearances. Due to this possible pattern, a character that has a combination of a minority as well as less common sex may appear less because of the combination having less characters. Non-minority characters that have more traditional sexes (male and female) may also have more appearances than most. 
 
 ```{r}
+## make data set that finds the total appearances for each minority type
 Hero_totals <-
   Hero %>%
   na.omit() %>%
@@ -213,6 +252,7 @@ Hero_totals <-
   summarise(total = sum(APPEARANCES)) 
 ```
 ```{r}
+## spread data table based on minority
 Hero_wide <-
   Hero_totals %>%
   spread(key = GSM, value = total)
@@ -220,11 +260,6 @@ knitr::kable(Hero_wide)
 ```
 Looking at this table, it does appear that in some cases the characters that are a minority and have a less common sex do have less appearances. Genderfluid characters (marked genderfluid for both GSM and sex) have the least number of appearances in the whole table with 33 appearances, and Bisexual, genderfluid characters also have one of the lower appearance numbers, with just 532 appearances. It is also shown that non-minorities with more traditional genders have the most appearances. It can also be noted that the only group of non-minority characters that has a less traditional sex (genderless) has a great drop-off in the number of appearances, with just 39 appearances. This could perhaps indicate that a less traditional sex does in fact negatively affect the total number of appearances. One other note is that it appears that characters that are minorities may not be paired with a less common sex as often as I originally thought, as Pansexual has apperances for only the female sex, and bisexual chracters have the most appearances within the female sex as well, indicating that a minority does not always indicate a less common sex as well.
 
-```{r}
-Hero %>%
-  ggplot(aes(x = GSM, y = APPEARANCES)) +
-  geom_boxplot() +
-  labs(x = "Minority Type", y = "Number of Appearances", title = "Minorities in relation to sex and appearances")
-```
-
+## Conclusions
+It appears from the various analyses I did that non-minority male characters are the most common, and also have the most total appearances, which can be expected since there are so many characters within this category. It can also be noted that time (the character's first appearance) does play a factor, but not as big of one as I had originally thought, as minority characters were introduced as early as the 1940's. 
 
