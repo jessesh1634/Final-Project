@@ -1,5 +1,12 @@
 # Comic Characters
 
+[Final Project File](analysis.nb.html)
+
+[Data Table for Marvel Comics](marvel-wikia-data.csv)
+
+[Data Table for DC Comics](dc-wikia-data.csv)
+
+## Information on Data Tables:
 These data tables are the data behind the story [Comic Books Are Still Made By Men, For Men And About Men](http://fivethirtyeight.com/features/women-in-comic-books/).
 
 The data comes from [Marvel Wikia](http://marvel.wikia.com/Main_Page) and [DC Wikia](http://dc.wikia.com/wiki/Main_Page). Characters were scraped on August 24. Appearance counts were scraped on September 2. The month and year of the first issue each character appeared in was pulled on October 6.
